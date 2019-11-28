@@ -9,7 +9,7 @@ This software is divided into two scripts: `createExcel.py` and `createInserts.p
 3. The file `inserts.xlsx` will be created.
 4. Edit the tables and save the file.
 5. Run the script `createInserts.py`
-6. Annnddd... it's done. Hopefully, it didn't crash
+6. Annnddd... it's done. Hopefully, it didn't crash 😀
 
 ## How can I contribute?
 Well if spaghetti code doesn't bother you, feel free to create a pull request with a functionality or improvement you believe to be of value.
