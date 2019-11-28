@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import re
 import string
 from openpyxl import Workbook, styles
@@ -23,10 +24,15 @@ with open('tables.ddl', 'r') as fp:
   while line:
       # Check if it has already reached ALTER TABLES
       if 'ALTER TABLE ' in line:
-        regex = re.findall(r'ALTER TABLE ([\w]+) ADD CONSTRAINT [\w]+ FOREIGN KEY \(([\w]+)\) REFERENCES ([\w]+) \(([\w]+)\)', line)
+        regex = re.findall(r'ALTER TABLE ([\w]+) ADD CONSTRAINT [\w]+ FOREIGN KEY \((.*)\) REFERENCES ([\w]+) \((.*)\);', line)
+
         if len(regex) > 0 and len(regex[0]) == 4:
           re_values = regex[0]
-          tables[re_values[0]]['fks'].append(re_values[1] + "|" + re_values[2] + "." + re_values[3])
+          fks = re_values[1].split(', ')
+          references = re_values[3].split(', ')
+
+          for i in range(len(fks)):
+            tables[re_values[0]]['fks'].append(fks[i] + "|" + re_values[2] + "." + references[i])
 
         line = fp.readline()
         continue # No need to check the rest
@@ -99,13 +105,13 @@ for table in tables_ordered:
     cell.fill = greenFill
     cell.font = whiteColor
 
-    cell = sheet.cell(2, arr_size + i, fk_split[1])
-    cell.fill = greenFill
-    cell.font = whiteColor
-
     # Gets the other column from the respective sheet
     original_table_split = fk_split[1].split('.')
     original_table = original_table_split[0]
+
+    cell = sheet.cell(2, arr_size + i, '=HYPERLINK("#' + original_table_split[0] + '!A1","' + fk_split[1] + '")')
+    cell.style = 'Hyperlink'
+    cell.fill = greenFill
 
     for j in range(3, 33):
       # Get the position of the cell in the other sheet
