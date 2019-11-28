@@ -26,9 +26,6 @@ with open('tables.ddl', 'r') as fp:
         regex = re.findall(r'ALTER TABLE ([\w]+) ADD CONSTRAINT [\w]+ FOREIGN KEY \(([\w]+)\) REFERENCES ([\w]+) \(([\w]+)\)', line)
         if len(regex) > 0 and len(regex[0]) == 4:
           re_values = regex[0]
-          if not ('fks' in tables[re_values[0]]):
-            tables[re_values[0]]['fks'] = []
-
           tables[re_values[0]]['fks'].append(re_values[1] + "|" + re_values[2] + "." + re_values[3])
 
         line = fp.readline()
@@ -41,11 +38,12 @@ with open('tables.ddl', 'r') as fp:
         tables[current_table] = {}
         tables[current_table]['attributes'] = []
         tables[current_table]['types'] = []
+        tables[current_table]['fks'] = []
 
       # Check if it is an attribute
       regex = re.findall(r'([\w]+)\s+([\w]+)', line)
-      if len(regex) > 1: # Garantees that there is a name and a type
-        if regex[0] != 'PRIMARY':
+      if len(regex) >= 1: # Garantees that there is a name and a type
+        if regex[0][0] != 'PRIMARY' and regex[0][0] != 'CREATE':
           tables[current_table]['attributes'].append(regex[0][0])
           tables[current_table]['types'].append(regex[0][1])
 
@@ -55,7 +53,13 @@ with open('tables.ddl', 'r') as fp:
 workbook = Workbook()
 sheet = workbook.active
 
-for table in tables:
+# Arrange tables if they have a Foreign Key or not
+# This will avoid conflits when doing the inserts
+tables_ordered = []
+for key, value in sorted(tables.items(), key=lambda item: len(item[1]['fks'])):
+  tables_ordered.append(key)
+
+for table in tables_ordered:
   sheet.title = table
 
   arr_size = len(tables[table]['types'])
@@ -83,6 +87,13 @@ for table in tables:
   for i in range(fks_size):
     fk_split = tables[table]['fks'][i].split('|')
 
+    # Change the color in the main table
+    index_main_table = tables[table]['attributes'].index(fk_split[0]) + 1
+    cell = sheet.cell(1, index_main_table)
+    cell.fill = greenFill
+    cell = sheet.cell(2, index_main_table)
+    cell.fill = greenFill
+
     cell = sheet.cell(1, arr_size + i, fk_split[0])
     sheet.column_dimensions[cell.column_letter].width = 28
     cell.fill = greenFill
@@ -94,8 +105,8 @@ for table in tables:
 
     # Gets the other column from the respective sheet
     original_table_split = fk_split[1].split('.')
-    print(original_table_split[1])
     original_table = original_table_split[0]
+
     for j in range(3, 33):
       # Get the position of the cell in the other sheet
       external_pos = tables[original_table]['attributes'].index(original_table_split[1])
