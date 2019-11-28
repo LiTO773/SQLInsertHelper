@@ -1,0 +1,2 @@
+python createInserts.py
+pause

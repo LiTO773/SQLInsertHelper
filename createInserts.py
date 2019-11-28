@@ -46,4 +46,6 @@ for name in wb.sheetnames:
       result = result[:-2] + ');\n\n'
       i += 1
 
-print(result)
+f = open("inserts.sql", "w")
+f.write(result)
+f.close()
